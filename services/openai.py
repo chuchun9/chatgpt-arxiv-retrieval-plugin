@@ -1,7 +1,7 @@
 from typing import List
 import openai
-
-
+import cohere
+import os
 from tenacity import retry, wait_random_exponential, stop_after_attempt
 
 
@@ -20,13 +20,16 @@ def get_embeddings(texts: List[str]) -> List[List[float]]:
         Exception: If the OpenAI API call fails.
     """
     # Call the OpenAI API to get the embeddings
-    response = openai.Embedding.create(input=texts, model="text-embedding-ada-002")
-
-    # Extract the embedding data from the response
-    data = response["data"]  # type: ignore
-
+    # response = openai.Embedding.create(input=texts, model="text-embedding-ada-002")
+    #
+    # # Extract the embedding data from the response
+    # data = response["data"]  # type: ignore
     # Return the embeddings as a list of lists of floats
-    return [result["embedding"] for result in data]
+    # return [result["embedding"] for result in data]
+
+    cohere_client = cohere.Client(api_key=os.environ.get("COHERE_API_KEY"))
+    embeds = cohere_client.embed(texts=texts, model="small", truncate="LEFT").embeddings
+    return embeds
 
 
 @retry(wait=wait_random_exponential(min=1, max=20), stop=stop_after_attempt(3))
